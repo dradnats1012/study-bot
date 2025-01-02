@@ -1,0 +1,21 @@
+discord:
+  bot:
+    token: // 디스코드 봇 토큰 추가
+
+spring:
+  application:
+    name: studybot
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/studybot?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    username:
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
