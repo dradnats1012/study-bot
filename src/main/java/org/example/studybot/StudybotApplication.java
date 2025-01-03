@@ -15,7 +15,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 @SpringBootApplication
 public class StudybotApplication {
 
-    public static void main(String[] args) throws LoginException {
+    public static void main(String[] args){
         ApplicationContext context = SpringApplication.run(StudybotApplication.class, args);
         DiscordBotToken discordBotTokenEntity = context.getBean(DiscordBotToken.class);
         String discordBotToken = discordBotTokenEntity.getDiscordBotToken();
