@@ -19,3 +19,6 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+
+voice-channel:
+  target-channel-name: // 디스코드 음성 채널 이름
