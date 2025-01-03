@@ -19,6 +19,9 @@ public class VoiceChannelTracker extends ListenerAdapter {
     @Autowired
     private VoiceChannelLogRepository repository;
 
+    @Autowired
+    private VoiceChannelProperties properties;
+
     private final Map<Long, LocalDateTime> userJoinTimes = new HashMap<>();
 
     @Override
@@ -30,11 +33,13 @@ public class VoiceChannelTracker extends ListenerAdapter {
         var leftChannel = event.getChannelLeft();
         User user = member.getUser();
 
+        String targetChannelName = properties.getTargetChannelName();
+
         var textChannels = event.getGuild().getTextChannelsByName("공부-기록", true);
         TextChannel textChannel = textChannels != null && !textChannels.isEmpty() ? textChannels.get(0) : null;
 
         // 사용자가 새로운 채널에 입장했는지 확인
-        if (joinedChannel != null && leftChannel == null) {
+        if (joinedChannel != null && joinedChannel.getName().equals(targetChannelName)) {
             if (!userJoinTimes.containsKey(userId)) { // 이미 기록된 사용자가 아닌 경우만 처리
                 userJoinTimes.put(userId, LocalDateTime.now());
                 System.out.println(nickName + "님이 `" + joinedChannel.getName() + "` 채널에 입장했습니다.");
