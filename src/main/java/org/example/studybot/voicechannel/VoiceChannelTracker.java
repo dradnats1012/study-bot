@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+import org.example.studybot.TextChannelProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,10 @@ public class VoiceChannelTracker extends ListenerAdapter {
     private VoiceChannelLogRepository repository;
 
     @Autowired
-    private VoiceChannelProperties properties;
+    private VoiceChannelProperties voiceChannelProperties;
+
+    @Autowired
+    private TextChannelProperties textChannelProperties;
 
     private final Map<Long, LocalDateTime> userJoinTimes = new HashMap<>();
 
@@ -33,13 +37,14 @@ public class VoiceChannelTracker extends ListenerAdapter {
         var leftChannel = event.getChannelLeft();
         User user = member.getUser();
 
-        String targetChannelName = properties.getTargetChannelName();
+        String targetVoiceChannelName = voiceChannelProperties.getTargetChannelName();
+        String targetTextChannelName = textChannelProperties.getTargetChannelName();
 
-        var textChannels = event.getGuild().getTextChannelsByName("공부-기록", true);
+        var textChannels = event.getGuild().getTextChannelsByName(targetTextChannelName, true);
         TextChannel textChannel = textChannels != null && !textChannels.isEmpty() ? textChannels.get(0) : null;
 
         // 사용자가 새로운 채널에 입장했는지 확인
-        if (joinedChannel != null && joinedChannel.getName().equals(targetChannelName)) {
+        if (joinedChannel != null && joinedChannel.getName().equals(targetVoiceChannelName)) {
             if (!userJoinTimes.containsKey(userId)) { // 이미 기록된 사용자가 아닌 경우만 처리
                 userJoinTimes.put(userId, LocalDateTime.now());
                 System.out.println(nickName + "님이 `" + joinedChannel.getName() + "` 채널에 입장했습니다.");
