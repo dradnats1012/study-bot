@@ -23,14 +23,18 @@ public class StudybotApplication {
 
         JDA jda = JDABuilder.createDefault(discordBotToken)
             .setActivity(Activity.playing("메시지 기다리는 중!"))
+            .setMaxReconnectDelay(32)
             .enableIntents(GatewayIntent.MESSAGE_CONTENT)
             .addEventListeners(context.getBean(StudyBotDiscordListener.class))
             .build();
 
         JDA jdaVoice = JDABuilder.createDefault(discordBotToken)
             .setActivity(Activity.playing("메시지 기다리는 중!"))
+            .setMaxReconnectDelay(32)
             .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_VOICE_STATES)
             .addEventListeners(context.getBean(VoiceChannelTracker.class))
             .build();
+
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
     }
 }

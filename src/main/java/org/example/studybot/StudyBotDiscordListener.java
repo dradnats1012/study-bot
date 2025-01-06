@@ -31,9 +31,6 @@ public class StudyBotDiscordListener extends ListenerAdapter {
     @Autowired
     private VoiceChannelLogRepository repository;
 
-    @Autowired
-    private DailySummaryService dailySummaryService;
-
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         User user = event.getAuthor();
