@@ -52,7 +52,7 @@ public class StudyBotDiscordListener extends ListenerAdapter {
 
         String[] messageArray = message.getContentDisplay().split(" ");
 
-        if (messageArray[0].equalsIgnoreCase("!")) {
+        if (messageArray.length > 1 && messageArray[0].equalsIgnoreCase("!")) {
             String[] messageArgs = Arrays.copyOfRange(messageArray, 1, messageArray.length);
 
             String nickname = member.getNickname(); // 길드에서의 닉네임 (null일 수도 있음)
@@ -62,6 +62,8 @@ public class StudyBotDiscordListener extends ListenerAdapter {
                 String returnMessage = sendMessage(msg, displayName, user.getName()); // 길드 이름 전달
                 textChannel.sendMessage(returnMessage).queue();
             }
+        } else{
+            textChannel.sendMessage("잘못된 명령어입니다.");
         }
     }
 
