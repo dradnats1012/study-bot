@@ -31,6 +31,9 @@ public class StudyBotDiscordListener extends ListenerAdapter {
     @Autowired
     private VoiceChannelLogRepository repository;
 
+    @Autowired
+    private DailySummaryService dailySummaryService;
+
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         User user = event.getAuthor();
@@ -63,7 +66,7 @@ public class StudyBotDiscordListener extends ListenerAdapter {
     }
 
     public String sendMessage(String message, String displayName, String userName) {
-        String returnMessage = "";
+        String returnMessage = "잘못된 명령어입니다.";
 
         if (message.startsWith("기록-")) {
             String datePart = message.replace("기록-", "").trim();
@@ -112,6 +115,9 @@ public class StudyBotDiscordListener extends ListenerAdapter {
                     break;
                 case "명령어":
                     returnMessage = getHelpMessage();
+                    break;
+                case "테스트":
+                    dailySummaryService.generateAndSendDailySummary();
                     break;
                 default:
                     returnMessage = "잘못된 명령어입니다.";
