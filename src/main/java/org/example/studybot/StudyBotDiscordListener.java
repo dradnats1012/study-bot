@@ -203,25 +203,20 @@ public class StudyBotDiscordListener extends ListenerAdapter {
     private String getLogsForSpecificDate(String datePart) {
         LocalDate targetDate;
         try {
-            // 입력을 "/" 기준으로 분리
             String[] parts = datePart.split("/");
 
-            // 월(M)과 일(d)을 파싱
             int month = Integer.parseInt(parts[0]);
             int day = Integer.parseInt(parts[1]);
 
-            // 현재 연도와 파싱된 월, 일을 사용하여 날짜 생성
             int currentYear = LocalDate.now().getYear();
             targetDate = LocalDate.of(currentYear, month, day);
         } catch (Exception e) {
             return "날짜 형식이 잘못되었습니다. 올바른 형식: MM/dd 또는 M/d (예: 12/25 또는 1/3)";
         }
 
-        // 지정된 날짜의 시작과 끝 계산
         LocalDateTime startOfDay = targetDate.atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
 
-        // DB에서 로그 검색
         List<VoiceChannelLog> logs = repository.findAllLogsBetween(startOfDay, endOfDay);
         if (logs.isEmpty()) {
             return targetDate.format(DateTimeFormatter.ofPattern("MM/dd")) + "에 기록이 없습니다.";
