@@ -3,6 +3,7 @@ package org.example.studybot;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,7 +33,6 @@ public class StudyBotDiscordListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-
         User user = event.getAuthor();
         Member member = event.getMember();
 
@@ -62,54 +62,60 @@ public class StudyBotDiscordListener extends ListenerAdapter {
         }
     }
 
-    private String sendMessage(String message, String displayName, String userName) {
+    public String sendMessage(String message, String displayName, String userName) {
         String returnMessage = "";
 
-        switch (message) {
-            case "안녕":
-                returnMessage = displayName + " 얼른 공부좀해!";
-                break;
-            case "하기싫어":
-                returnMessage = displayName + " 그냥 좀 해";
-                break;
-            case "오늘만쉴까":
-                returnMessage = displayName + " 그럼 평생 쉬겠지";
-                break;
-            case "김민선바보":
-                returnMessage = "김민선 바보멍청이";
-                break;
-            case "오주영바보":
-                returnMessage = "오주영 바보멍청이";
-                break;
-            case "한승희바보":
-                returnMessage = "한승희 바보멍청이";
-                break;
-            case "허준기바보":
-                returnMessage = "허준기 바보멍청이";
-                break;
-            case "전체월간기록":
-                returnMessage = getAllMonthlyLogs();
-                break;
-            case "전체주간기록":
-                returnMessage = getAllWeeklyLogs();
-                break;
-            case "전체일간기록":
-                returnMessage = getAllDailyLogs();
-                break;
-            case "월간기록":
-                returnMessage = getMonthlyLogs(userName);
-                break;
-            case "주간기록":
-                returnMessage = getWeeklyLogs(userName);
-                break;
-            case "일간기록":
-                returnMessage = getDailyLogs(userName);
-                break;
-            case "명령어":
-                returnMessage = getHelpMessage();
-                break;
-            default:
-                returnMessage = "잘못된 명령어입니다.";
+        if (message.startsWith("기록-")) {
+            String datePart = message.replace("기록-", "").trim();
+            System.out.println(datePart);
+            returnMessage = getLogsForSpecificDate(datePart);
+        } else {
+            switch (message) {
+                case "안녕":
+                    returnMessage = displayName + " 얼른 공부좀해!";
+                    break;
+                case "하기싫어":
+                    returnMessage = displayName + " 그냥 좀 해";
+                    break;
+                case "오늘만쉴까":
+                    returnMessage = displayName + " 그럼 평생 쉬겠지";
+                    break;
+                case "김민선바보":
+                    returnMessage = "김민선 바보멍청이";
+                    break;
+                case "오주영바보":
+                    returnMessage = "오주영 바보멍청이";
+                    break;
+                case "한승희바보":
+                    returnMessage = "한승희 바보멍청이";
+                    break;
+                case "허준기바보":
+                    returnMessage = "허준기 바보멍청이";
+                    break;
+                case "전체월간기록":
+                    returnMessage = getAllMonthlyLogs();
+                    break;
+                case "전체주간기록":
+                    returnMessage = getAllWeeklyLogs();
+                    break;
+                case "전체일간기록":
+                    returnMessage = getAllDailyLogs();
+                    break;
+                case "월간기록":
+                    returnMessage = getMonthlyLogs(userName);
+                    break;
+                case "주간기록":
+                    returnMessage = getWeeklyLogs(userName);
+                    break;
+                case "일간기록":
+                    returnMessage = getDailyLogs(userName);
+                    break;
+                case "명령어":
+                    returnMessage = getHelpMessage();
+                    break;
+                default:
+                    returnMessage = "잘못된 명령어입니다.";
+            }
         }
 
         return returnMessage;
@@ -192,6 +198,36 @@ public class StudyBotDiscordListener extends ListenerAdapter {
         List<VoiceChannelLog> logs = repository.findLogsBetween(startOfDay, endOfDay, userName);
         System.out.println(userName);
         return formatLogsSummed(logs, "일간");
+    }
+
+    private String getLogsForSpecificDate(String datePart) {
+        LocalDate targetDate;
+        try {
+            // 입력을 "/" 기준으로 분리
+            String[] parts = datePart.split("/");
+
+            // 월(M)과 일(d)을 파싱
+            int month = Integer.parseInt(parts[0]);
+            int day = Integer.parseInt(parts[1]);
+
+            // 현재 연도와 파싱된 월, 일을 사용하여 날짜 생성
+            int currentYear = LocalDate.now().getYear();
+            targetDate = LocalDate.of(currentYear, month, day);
+        } catch (Exception e) {
+            return "날짜 형식이 잘못되었습니다. 올바른 형식: MM/dd 또는 M/d (예: 12/25 또는 1/3)";
+        }
+
+        // 지정된 날짜의 시작과 끝 계산
+        LocalDateTime startOfDay = targetDate.atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
+
+        // DB에서 로그 검색
+        List<VoiceChannelLog> logs = repository.findAllLogsBetween(startOfDay, endOfDay);
+        if (logs.isEmpty()) {
+            return targetDate.format(DateTimeFormatter.ofPattern("MM/dd")) + "에 기록이 없습니다.";
+        }
+
+        return formatLogsSummed(logs, targetDate.format(DateTimeFormatter.ofPattern("MM/dd")));
     }
 
     private String getHelpMessage() {

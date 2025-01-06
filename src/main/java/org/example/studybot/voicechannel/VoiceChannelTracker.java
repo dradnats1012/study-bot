@@ -45,14 +45,8 @@ public class VoiceChannelTracker extends ListenerAdapter {
 
         // 사용자가 새로운 채널에 입장했는지 확인
         if (joinedChannel != null && joinedChannel.getName().equals(targetVoiceChannelName)) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
             if (!userJoinTimes.containsKey(userId)) { // 사용자가 아직 기록되지 않았을 때만 처리
                 userJoinTimes.put(userId, LocalDateTime.now()); // 입장 시간 기록
-                System.out.println(nickName + "님이 `" + joinedChannel.getName() + "` 채널에 입장했습니다.");
 
                 if (textChannel != null) {
                     textChannel.sendMessage(
