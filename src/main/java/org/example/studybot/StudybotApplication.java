@@ -34,7 +34,5 @@ public class StudybotApplication {
             .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_VOICE_STATES)
             .addEventListeners(context.getBean(VoiceChannelTracker.class))
             .build();
-
-        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
     }
 }
