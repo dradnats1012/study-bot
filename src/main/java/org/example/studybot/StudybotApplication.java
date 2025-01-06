@@ -1,11 +1,11 @@
 package org.example.studybot;
 
-import javax.security.auth.login.LoginException;
 
 import org.example.studybot.voicechannel.VoiceChannelTracker;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 @SpringBootApplication
+@EnableScheduling
 public class StudybotApplication {
 
     public static void main(String[] args){
