@@ -116,9 +116,6 @@ public class StudyBotDiscordListener extends ListenerAdapter {
                 case "명령어":
                     returnMessage = getHelpMessage();
                     break;
-                case "테스트":
-                    dailySummaryService.generateAndSendDailySummary();
-                    break;
                 default:
                     returnMessage = "잘못된 명령어입니다.";
             }
