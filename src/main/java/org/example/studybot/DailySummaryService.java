@@ -75,13 +75,22 @@ public class DailySummaryService {
         StringBuilder response = new StringBuilder(periodName + " 기록 요약:\n");
         userChannelDurations.forEach((nickName, channelDurations) -> {
             channelDurations.forEach((channelName, totalDuration) -> {
+                String formattedDuration = formatDuration(totalDuration);
                 response.append(String.format(
-                    "%s님이 `%s` 채널에서 %d초 머물렀습니다.\n",
-                    nickName, channelName, totalDuration
+                    "%s님이 `%s` 채널에서 %s 머물렀습니다.\n",
+                    nickName, channelName, formattedDuration
                 ));
             });
         });
 
         return response.toString();
+    }
+
+    private String formatDuration(long seconds) {
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
+        long secs = seconds % 60;
+
+        return String.format("%d시간 %d분 %d초", hours, minutes, secs);
     }
 }
