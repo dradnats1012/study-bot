@@ -82,6 +82,15 @@ public class StudyBotDiscordListener extends ListenerAdapter {
                 case "오늘만쉴까":
                     returnMessage = displayName + " 그럼 평생 쉬겠지";
                     break;
+                case "진짜하기싫다":
+                    returnMessage = displayName + " 책이라도 읽어.";
+                    break;
+                case "그냥잘까":
+                    returnMessage = displayName + " 평생 잠만 자고 싶어?";
+                    break;
+                case "피곤해":
+                    returnMessage = displayName + " 가짜 피곤함이야.";
+                    break;
                 case "김민선바보":
                     returnMessage = "김민선 바보멍청이";
                     break;
@@ -93,6 +102,9 @@ public class StudyBotDiscordListener extends ListenerAdapter {
                     break;
                 case "허준기바보":
                     returnMessage = "허준기 바보멍청이";
+                    break;
+                case "전체기록":
+                    returnMessage = getAllLogs();
                     break;
                 case "전체월간기록":
                     returnMessage = getAllMonthlyLogs();
@@ -121,6 +133,27 @@ public class StudyBotDiscordListener extends ListenerAdapter {
         }
 
         return returnMessage;
+    }
+
+    private String getAllLogs() {
+        String monthSummary = getLogSummary("월간 기록",
+                LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay(),
+                LocalDate.now().with(TemporalAdjusters.lastDayOfMonth()).atTime(23, 59, 59)
+        );
+        String weekSummary = getLogSummary("주간 기록",
+                LocalDate.now().with(DayOfWeek.MONDAY).atStartOfDay(),
+                LocalDate.now().with(DayOfWeek.SUNDAY).atTime(23, 59, 59)
+        );
+        String daySummary = getLogSummary("일간 기록",
+                LocalDate.now().atStartOfDay(),
+                LocalDate.now().plusDays(1).atStartOfDay().minusSeconds(1)
+        );
+        return monthSummary + "\n" + weekSummary + "\n" + daySummary;
+    }
+
+    private String getLogSummary(String periodName, LocalDateTime start, LocalDateTime end) {
+        List<VoiceChannelLog> logs = repository.findAllLogsBetween(start, end);
+        return formatLogsSummed(logs, periodName);
     }
 
     private String formatLogsSummed(List<VoiceChannelLog> logs, String periodName) {
@@ -233,9 +266,13 @@ public class StudyBotDiscordListener extends ListenerAdapter {
             \uD83D\uDD17 **일반 명령어**
             `안녕` - 봇이 인사를 합니다.
             `하기싫어` - 공부 동기를 부여합니다.
-            `오늘만쉴까` - 오늘의 결심을 확인합니다.
+            `오늘만쉴까` - 오늘의 결심을 확인합니다.           
+            `진짜하기싫어` - 공부 동기를 부여합니다.
+            `그냥잘까` - 공부 동기를 부여합니다.
+            `피곤해` - 공부 동기를 부여합니다.
 
             \uD83D\uDCCA **기록 명령어**
+            `전체기록` - 모든 사용자의 전체 기록을 확인합니다.
             `전체월간기록` - 모든 사용자의 월간 기록을 확인합니다.
             `전체주간기록` - 모든 사용자의 주간 기록을 확인합니다.
             `전체일간기록` - 모든 사용자의 일간 기록을 확인합니다.
