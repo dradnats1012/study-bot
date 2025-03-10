@@ -20,7 +20,7 @@ public class Channel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long channelId;
+    private Long id;
 
     @Column(name = "discord_channel_id", nullable = false)
     private String discordChannelId;
