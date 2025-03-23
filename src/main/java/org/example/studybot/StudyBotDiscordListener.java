@@ -5,134 +5,118 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.example.studybot.dto.team.CreateTeamDTO;
+import org.example.studybot.service.TeamService;
 import org.example.studybot.voicechannel.VoiceChannelLog;
 import org.example.studybot.voicechannel.VoiceChannelLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Component
+@Slf4j
 public class StudyBotDiscordListener extends ListenerAdapter {
 
     @Autowired
     private VoiceChannelLogRepository repository;
 
+    @Autowired
+    private TeamService teamService;
+
+    private final Map<String, Command> commandMap = new HashMap<>();
+
+    // 초기화 (명령어 등록)
+    @PostConstruct
+    public void init() {
+        commandMap.put("안녕", (displayName, userName) -> displayName + " 얼른 공부좀해!");
+        commandMap.put("하기싫어", (displayName, userName) -> displayName + " 그냥 좀 해");
+        commandMap.put("오늘만쉴까", (displayName, userName) -> displayName + " 그럼 평생 쉬겠지");
+        commandMap.put("진짜하기싫다", (displayName, userName) -> displayName + " 책이라도 읽어.");
+        commandMap.put("그냥잘까", (displayName, userName) -> displayName + " 평생 잠만 자고 싶어?");
+        commandMap.put("피곤해", (displayName, userName) -> displayName + " 가짜 피곤함이야.");
+        commandMap.put("김민선바보", (d, u) -> "김민선 바보멍청이");
+        commandMap.put("오주영바보", (d, u) -> "오주영 바보멍청이");
+        commandMap.put("한승희바보", (d, u) -> "한승희 바보멍청이");
+        commandMap.put("허준기바보", (d, u) -> "허준기 바보멍청이");
+        //commandMap.put("팀생성", )
+
+        // 기록 관련
+        commandMap.put("전체기록", (d, u) -> getAllMonthlyLogs() + "\n" + getAllWeeklyLogs() + "\n" + getAllDailyLogs());
+        commandMap.put("전체월간기록", (d, u) -> getAllMonthlyLogs());
+        commandMap.put("전체주간기록", (d, u) -> getAllWeeklyLogs());
+        commandMap.put("전체일간기록", (d, u) -> getAllDailyLogs());
+        commandMap.put("월간기록", (d, u) -> getMonthlyLogs(u));
+        commandMap.put("주간기록", (d, u) -> getWeeklyLogs(u));
+        commandMap.put("일간기록", (d, u) -> getDailyLogs(u));
+    }
+
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         User user = event.getAuthor();
         Member member = event.getMember();
-
         TextChannel textChannel = event.getChannel().asTextChannel();
         Message message = event.getMessage();
 
-        log.info("get message : " + message.getContentDisplay());
-
-        if (user.isBot()) {
+        if (user.isBot())
             return;
-        } else if (message.getContentDisplay().equals("")) {
-            log.info("문자열 비어있음");
-        }
 
-        String[] messageArray = message.getContentDisplay().split(" ");
+        String content = message.getContentDisplay().trim();
 
-        if (messageArray.length > 1 && messageArray[0].equalsIgnoreCase("!")) {
-            String[] messageArgs = Arrays.copyOfRange(messageArray, 1, messageArray.length);
+        if (content.startsWith("!")) {
+            String nickname = member.getNickname();
+            String displayName = nickname != null ? nickname : user.getName();
 
-            String nickname = member.getNickname(); // 길드에서의 닉네임 (null일 수도 있음)
-            String displayName = nickname != null ? nickname : user.getName(); // 닉네임 없으면 기본 이름
+            String cmd = content.substring(1).trim();
 
-            for (String msg : messageArgs) {
-                String returnMessage = sendMessage(msg, displayName, user.getName()); // 길드 이름 전달
-                textChannel.sendMessage(returnMessage).queue();
+            if (cmd.equals("명령어")) {
+                textChannel.sendMessage("명령어를 선택하거나 취소할 수 있습니다.")
+                    .addActionRow(
+                        getCommandDropdown() // 드롭다운
+                    )
+                    .addActionRow(
+                        Button.danger("cancel_menu", "❌ 취소") // 버튼
+                    )
+                    .queue();
             }
-        } else{
-            textChannel.sendMessage("잘못된 명령어입니다.");
+
+            String returnMessage = handleCommand(cmd, displayName, user.getName());
+            textChannel.sendMessage(returnMessage).queue();
         }
     }
 
-    public String sendMessage(String message, String displayName, String userName) {
-        String returnMessage = "잘못된 명령어입니다.";
-
+    private String handleCommand(String message, String displayName, String userName) {
         if (message.startsWith("기록-")) {
             String datePart = message.replace("기록-", "").trim();
-            System.out.println(datePart);
-            returnMessage = getLogsForSpecificDate(datePart);
-        } else {
-            switch (message) {
-                case "안녕":
-                    returnMessage = displayName + " 얼른 공부좀해!";
-                    break;
-                case "하기싫어":
-                    returnMessage = displayName + " 그냥 좀 해";
-                    break;
-                case "오늘만쉴까":
-                    returnMessage = displayName + " 그럼 평생 쉬겠지";
-                    break;
-                case "진짜하기싫다":
-                    returnMessage = displayName + " 책이라도 읽어.";
-                    break;
-                case "그냥잘까":
-                    returnMessage = displayName + " 평생 잠만 자고 싶어?";
-                    break;
-                case "피곤해":
-                    returnMessage = displayName + " 가짜 피곤함이야.";
-                    break;
-                case "김민선바보":
-                    returnMessage = "김민선 바보멍청이";
-                    break;
-                case "오주영바보":
-                    returnMessage = "오주영 바보멍청이";
-                    break;
-                case "한승희바보":
-                    returnMessage = "한승희 바보멍청이";
-                    break;
-                case "허준기바보":
-                    returnMessage = "허준기 바보멍청이";
-                    break;
-                case "전체기록":
-                    returnMessage = getAllMonthlyLogs() + "\n" + getAllWeeklyLogs() + "\n" + getAllDailyLogs();
-                    break;
-                case "전체월간기록":
-                    returnMessage = getAllMonthlyLogs();
-                    break;
-                case "전체주간기록":
-                    returnMessage = getAllWeeklyLogs();
-                    break;
-                case "전체일간기록":
-                    returnMessage = getAllDailyLogs();
-                    break;
-                case "월간기록":
-                    returnMessage = getMonthlyLogs(userName);
-                    break;
-                case "주간기록":
-                    returnMessage = getWeeklyLogs(userName);
-                    break;
-                case "일간기록":
-                    returnMessage = getDailyLogs(userName);
-                    break;
-                case "명령어":
-                    returnMessage = getHelpMessage();
-                    break;
-                default:
-                    returnMessage = "잘못된 명령어입니다.";
-            }
+            return getLogsForSpecificDate(datePart);
         }
 
-        return returnMessage;
+        Command cmd = commandMap.get(message);
+        if (cmd != null) {
+            return cmd.excute(displayName, userName);
+        }
+
+        return "잘못된 명령어입니다.";
     }
 
     private String formatLogsSummed(List<VoiceChannelLog> logs, String periodName) {
@@ -239,30 +223,89 @@ public class StudyBotDiscordListener extends ListenerAdapter {
         return formatLogsSummed(logs, targetDate.format(DateTimeFormatter.ofPattern("MM/dd")));
     }
 
-    private String getHelpMessage() {
-        return """
-            **StudyBot 명령어 모음집**
-            \uD83D\uDD17 **일반 명령어**
-            `안녕` - 봇이 인사를 합니다.
-            `하기싫어` - 공부 동기를 부여합니다.
-            `오늘만쉴까` - 오늘의 결심을 확인합니다.           
-            `진짜하기싫어` - 공부 동기를 부여합니다.
-            `그냥잘까` - 공부 동기를 부여합니다.
-            `피곤해` - 공부 동기를 부여합니다.
+    private StringSelectMenu getCommandDropdown() {
+        return StringSelectMenu.create("command_selector")
+            .setPlaceholder("실행할 명령어를 선택하세요!")
+            .addOption("안녕", "안녕", "봇이 인사합니다.")
+            .addOption("하기싫어", "하기싫어", "동기부여 멘트 출력")
+            .addOption("오늘만쉴까", "오늘만쉴까", "오늘의 결심을 확인합니다.")
+            .addOption("진짜하기싫다", "진짜하기싫다", "공부하라고 다그칩니다.")
+            .addOption("그냥잘까", "그냥잘까", "공부하라고 다그칩니다.")
+            .addOption("피곤해", "피곤해", "공부하라고 다그칩니다.")
+            .addOption("월간기록", "월간기록", "본인의 월간 기록 확인")
+            .addOption("주간기록", "주간기록", "본인의 주간 기록 확인")
+            .addOption("일간기록", "일간기록", "본인의 일간 기록 확인")
+            .addOption("전체월간기록", "전체월간기록", "전체 월간 기록 확인")
+            .addOption("전체주간기록", "전체주간기록", "전체 주간 기록 확인")
+            .addOption("전체일간기록", "전체일간기록", "전체 일간 기록 확인")
+            .addOption("전체기록", "전체기록", "전체 월간, 주간, 일간 기록 확인")
+            .addOption("명령어", "명령어", "명령어 목록을 다시 봅니다.")
+            .addOption("팀생성", "팀생성", "팀을 생성합니다.")
+            .build();
+    }
 
-            \uD83D\uDCCA **기록 명령어**
-            `전체기록` - 모든 사용자의 전체 기록을 확인합니다.
-            `전체월간기록` - 모든 사용자의 월간 기록을 확인합니다.
-            `전체주간기록` - 모든 사용자의 주간 기록을 확인합니다.
-            `전체일간기록` - 모든 사용자의 일간 기록을 확인합니다.
-            `월간기록` - 본인의 월간 기록을 확인합니다.
-            `주간기록` - 본인의 주간 기록을 확인합니다.
-            `일간기록` - 본인의 일간 기록을 확인합니다.
+    @Override
+    public void onStringSelectInteraction(StringSelectInteractionEvent event) {
+        if (event.getComponentId().equals("command_selector")) {
+            String selected = event.getValues().get(0); // 선택된 명령어 가져오기
 
-            \uD83D\uDE09 **기타**
-            `명령어` - 이 명령어 목록을 확인합니다.
+            if (selected.equals("팀생성")) {
+                // 모달 열기
+                event.replyModal(getTeamNameModal()).queue();
+                return;
+            }
 
-            **Tip:** 명령어는 `!+공백`로 시작해야 합니다.
-            """;
+            Member member = event.getMember();
+            String nickname = member.getNickname();
+            String displayName = nickname != null ? nickname : event.getUser().getName();
+
+            String returnMessage = handleCommand(selected, displayName, event.getUser().getName());
+            event.reply(returnMessage).queue();
+        }
+    }
+
+    private Modal getTeamNameModal() {
+        return Modal.create("team_create_modal", "팀 이름 입력")
+            .addActionRow(TextInput.create("team_name", "팀 이름을 입력하세요", TextInputStyle.SHORT)
+                .setPlaceholder("예: 스터디1")
+                .setRequired(true)
+                .build()
+            )
+            .build();
+    }
+
+    @Override
+    public void onModalInteraction(net.dv8tion.jda.api.events.interaction.ModalInteractionEvent event) {
+        if (event.getModalId().equals("team_create_modal")) {
+            String teamName = event.getValue("team_name").getAsString().trim();
+            createVoiceChannel(teamName, event);
+        }
+    }
+
+    private void createVoiceChannel(String teamName, ModalInteractionEvent event) {
+        String teamCategoryName = teamName;
+        String channelName = teamName + " 공부방";
+
+        Guild guild = event.getGuild();
+
+        guild.createCategory(teamCategoryName)
+            .queue(category -> {
+                category.createVoiceChannel(channelName)
+                    .queue(vc -> {
+                        String voiceChannelId = vc.getId();
+                        CreateTeamDTO dto = new CreateTeamDTO(teamName, voiceChannelId, channelName);
+                        teamService.createTeam(dto);
+
+                        event.reply("✅ `" + teamCategoryName + "` 카테고리와 `" + vc.getName() + "` 채널이 생성되었습니다!").queue();
+                    }, error -> event.reply("⚠️ 음성채널 생성 실패").queue());
+            }, error -> event.reply("⚠️ 카테고리 생성 실패").queue());
+    }
+
+    @Override
+    public void onButtonInteraction(net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent event) {
+        if (event.getComponentId().equals("cancel_menu")) {
+            event.reply("명령어 선택이 취소되었습니다!").setEphemeral(true).queue();
+            event.getMessage().delete().queue();
+        }
     }
 }
