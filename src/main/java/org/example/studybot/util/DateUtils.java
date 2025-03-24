@@ -1,4 +1,4 @@
-package org.example.studybot;
+package org.example.studybot.util;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

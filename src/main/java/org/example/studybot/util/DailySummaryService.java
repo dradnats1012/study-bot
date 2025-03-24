@@ -1,4 +1,4 @@
-package org.example.studybot;
+package org.example.studybot.util;
 
 import org.example.studybot.voicechannel.VoiceChannelLog;
 import org.example.studybot.voicechannel.VoiceChannelLogRepository;

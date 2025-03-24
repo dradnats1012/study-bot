@@ -1,4 +1,4 @@
-package org.example.studybot.voicechannel;
+package org.example.studybot.listener;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -10,7 +10,10 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
-import org.example.studybot.TextChannelProperties;
+import org.example.studybot.util.TextChannelProperties;
+import org.example.studybot.voicechannel.VoiceChannelLog;
+import org.example.studybot.voicechannel.VoiceChannelLogRepository;
+import org.example.studybot.voicechannel.VoiceChannelProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

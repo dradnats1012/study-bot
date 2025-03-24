@@ -1,4 +1,4 @@
-package org.example.studybot;
+package org.example.studybot.listener;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.example.studybot.dto.team.CreateTeamDTO;
+import org.example.studybot.model.Command;
 import org.example.studybot.service.TeamService;
 import org.example.studybot.voicechannel.VoiceChannelLog;
 import org.example.studybot.voicechannel.VoiceChannelLogRepository;

@@ -1,4 +1,4 @@
-package org.example.studybot;
+package org.example.studybot.model;
 
 @FunctionalInterface
 public interface Command {
