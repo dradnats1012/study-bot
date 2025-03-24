@@ -1,4 +1,4 @@
-package org.example.studybot;
+package org.example.studybot.util;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;

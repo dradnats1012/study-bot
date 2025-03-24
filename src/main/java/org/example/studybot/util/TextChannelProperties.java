@@ -1,4 +1,4 @@
-package org.example.studybot;
+package org.example.studybot.util;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;

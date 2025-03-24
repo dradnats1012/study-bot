@@ -1,7 +1,9 @@
 package org.example.studybot;
 
 
-import org.example.studybot.voicechannel.VoiceChannelTracker;
+import org.example.studybot.listener.StudyBotDiscordListener;
+import org.example.studybot.util.DiscordBotToken;
+import org.example.studybot.listener.VoiceChannelTracker;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;

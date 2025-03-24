@@ -1,6 +1,6 @@
 package org.example.studybot.schedule;
 
-import org.example.studybot.DailySummaryService;
+import org.example.studybot.util.DailySummaryService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
