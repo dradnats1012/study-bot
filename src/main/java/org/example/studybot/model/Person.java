@@ -9,21 +9,24 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "user")
+@Table(name = "person")
 @Getter
 @Setter
-public class User {
+@NoArgsConstructor
+public class Person {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    @Column(name = "discord_id", nullable = false)
+    private Long discordId;
 
     @Column(name = "nickName", nullable = false)
     private String nickName;
@@ -31,4 +34,11 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_id", nullable = false)
     private Team team;
+
+    @Builder
+    public Person(Long discordId, String nickName, Team team){
+        this.discordId = discordId;
+        this.nickName = nickName;
+        this.team = team;
+    }
 }
