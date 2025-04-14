@@ -1,5 +1,6 @@
 package org.example.studybot.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.example.studybot.model.Team;
@@ -17,4 +18,6 @@ public interface TeamRepository extends Repository<Team, Long> {
     }
 
     void delete(Team team);
+
+    List<Team> findAll();
 }

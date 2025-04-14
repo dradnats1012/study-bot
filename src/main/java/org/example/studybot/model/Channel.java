@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,6 +29,9 @@ public class Channel {
 
     @Column(name = "channel_name", nullable = false)
     private String channelName;
+
+    @OneToOne(mappedBy = "channel")
+    private Team team;
 
     @Builder
     public Channel(

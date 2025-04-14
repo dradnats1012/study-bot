@@ -26,9 +26,9 @@ public class Person {
     private Long id;
 
     @Column(name = "discord_id", nullable = false)
-    private Long discordId;
+    private String discordId;
 
-    @Column(name = "nickName", nullable = false)
+    @Column(name = "nick_name", nullable = false)
     private String nickName;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -36,7 +36,7 @@ public class Person {
     private Team team;
 
     @Builder
-    public Person(Long discordId, String nickName, Team team){
+    public Person(String discordId, String nickName, Team team){
         this.discordId = discordId;
         this.nickName = nickName;
         this.team = team;

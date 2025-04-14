@@ -15,4 +15,13 @@ public interface PersonRepository extends Repository<Person, Long> {
     }
 
     Person save(Person person);
+
+    void deleteById(Long id);
+
+    Optional<Person> findByDiscordId(String id);
+
+    default Person getByDiscordId(String id) {
+        return findByDiscordId(id)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
+    }
 }
