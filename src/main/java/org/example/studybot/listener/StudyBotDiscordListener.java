@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.example.studybot.dto.team.CreateTeamDTO;
 import org.example.studybot.model.Command;
+import org.example.studybot.model.Team;
 import org.example.studybot.service.TeamService;
 import org.example.studybot.voicechannel.VoiceChannelLog;
 import org.example.studybot.voicechannel.VoiceChannelLogRepository;
@@ -27,6 +28,7 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
@@ -103,6 +105,75 @@ public class StudyBotDiscordListener extends ListenerAdapter {
 
             String returnMessage = handleCommand(cmd, displayName, user.getName());
             textChannel.sendMessage(returnMessage).queue();
+        }
+    }
+
+    @Override
+    public void onStringSelectInteraction(StringSelectInteractionEvent event) {
+        String componentId = event.getComponentId();
+
+        // 2️⃣ 명령어 선택 드롭다운
+        if (componentId.equals("command_selector")) {
+            String selected = event.getValues().get(0);
+
+            if (selected.equals("팀생성")) {
+                event.replyModal(getTeamNameModal()).queue();
+                return;
+            }
+
+            Member member = event.getMember();
+            String nickname = member != null ? member.getNickname() : null;
+            String displayName = nickname != null ? nickname : event.getUser().getName();
+
+            String returnMessage = handleCommand(selected, displayName, event.getUser().getName());
+            event.reply(returnMessage).queue();
+        }
+
+        if (componentId.equals("command_selector")) {
+            // 선택된 팀 ID 가져오기
+            long teamId = Long.parseLong(event.getValues().get(0));
+            Guild guild = event.getGuild();
+
+            // 전체 멤버 가져와서 드롭다운 생성
+            guild.loadMembers().onSuccess(members -> {
+                List<SelectOption> userOptions = members.stream()
+                    .filter(member -> !member.getUser().isBot())
+                    .limit(25)
+                    .map(member -> SelectOption.of(member.getEffectiveName(), member.getId()))
+                    .toList();
+
+                StringSelectMenu userMenu = StringSelectMenu.create("add_team_user_" + teamId)
+                    .setPlaceholder("추가할 유저 선택")
+                    .setMaxValues(25)
+                    .addOptions(userOptions)
+                    .build();
+
+                event.reply("✅ 팀을 선택했습니다. 이제 추가할 유저를 선택하세요:")
+                    .addActionRow(userMenu)
+                    .queue();
+            });
+
+            return;
+        }
+
+        if (componentId.startsWith("command_selector")) {
+            long teamId = Long.parseLong(componentId.replace("add_team_user_", ""));
+
+            List<Member> selectedMembers = event.getValues().stream()
+                .map(userId -> event.getGuild().getMemberById(userId))
+                .filter(member -> member != null)
+                .toList();
+
+            /*PutUserDTO dto = new PutUserDTO(teamId, selectedMembers);
+            teamService.putUserInTeam(dto);
+*/
+            String addedNames = selectedMembers.stream()
+                .map(Member::getEffectiveName)
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("선택된 사용자가 없습니다.");
+
+            event.reply("✅ 다음 멤버들이 팀에 추가되었습니다: " + addedNames).queue();
+            return;
         }
     }
 
@@ -242,27 +313,8 @@ public class StudyBotDiscordListener extends ListenerAdapter {
             .addOption("전체기록", "전체기록", "전체 월간, 주간, 일간 기록 확인")
             .addOption("명령어", "명령어", "명령어 목록을 다시 봅니다.")
             .addOption("팀생성", "팀생성", "팀을 생성합니다.")
+            .addOption("팀원추가", "팀원추가", "팀원을 추가합니다.")
             .build();
-    }
-
-    @Override
-    public void onStringSelectInteraction(StringSelectInteractionEvent event) {
-        if (event.getComponentId().equals("command_selector")) {
-            String selected = event.getValues().get(0); // 선택된 명령어 가져오기
-
-            if (selected.equals("팀생성")) {
-                // 모달 열기
-                event.replyModal(getTeamNameModal()).queue();
-                return;
-            }
-
-            Member member = event.getMember();
-            String nickname = member.getNickname();
-            String displayName = nickname != null ? nickname : event.getUser().getName();
-
-            String returnMessage = handleCommand(selected, displayName, event.getUser().getName());
-            event.reply(returnMessage).queue();
-        }
     }
 
     private Modal getTeamNameModal() {
@@ -308,5 +360,49 @@ public class StudyBotDiscordListener extends ListenerAdapter {
             event.reply("명령어 선택이 취소되었습니다!").setEphemeral(true).queue();
             event.getMessage().delete().queue();
         }
+    }
+
+    private void showUserSelectMenu(Guild guild, TextChannel channel, Long teamId) {
+        // 멤버 비동기 로드
+        guild.loadMembers().onSuccess(members -> {
+            // 최대 25명까지만 드롭다운 가능 (Discord 제한)
+            List<SelectOption> options = members.stream()
+                .filter(member -> !member.getUser().isBot())
+                .limit(25)
+                .map(member -> SelectOption.of(member.getEffectiveName(), member.getId()))
+                .toList();
+
+            StringSelectMenu menu = StringSelectMenu.create("팀원추가" + teamId)
+                .setPlaceholder("팀에 추가할 유저를 선택하세요")
+                .setMaxValues(25)  // ✅ 최대 25명까지 다중 선택 허용
+                .addOptions(options)
+                .build();
+
+            channel.sendMessage("팀에 추가할 유저를 선택해주세요:")
+                .addActionRow(menu)
+                .queue();
+        });
+    }
+
+    private void showTeamSelectMenu(Guild guild, TextChannel channel) {
+        List<Team> teams = teamService.getAllTeams();
+
+        if (teams.isEmpty()) {
+            channel.sendMessage("❌ 등록된 팀이 없습니다.").queue();
+            return;
+        }
+
+        List<SelectOption> options = teams.stream()
+            .map(team -> SelectOption.of(team.getName(), String.valueOf(team.getId())))
+            .toList();
+
+        StringSelectMenu menu = StringSelectMenu.create("team_selector")
+            .setPlaceholder("팀을 선택하세요")
+            .addOptions(options)
+            .build();
+
+        channel.sendMessage("👥 유저를 추가할 팀을 선택하세요:")
+            .addActionRow(menu)
+            .queue();
     }
 }

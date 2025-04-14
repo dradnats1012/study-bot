@@ -1,32 +1,40 @@
 package org.example.studybot.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.example.studybot.dto.person.PutPersonDTO;
 import org.example.studybot.dto.team.CreateTeamDTO;
 import org.example.studybot.model.Channel;
+import org.example.studybot.model.Person;
 import org.example.studybot.model.Team;
-import org.example.studybot.repository.ChannelRepository;
 import org.example.studybot.repository.TeamRepository;
+import org.example.studybot.repository.PersonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Guild;
-
-import jakarta.transaction.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class TeamService {
 
     @Autowired
     private TeamRepository teamRepository;
 
     @Autowired
+    private PersonRepository personRepository;
+
+    @Autowired
+    private ChannelService channelService;
+
+    @Autowired
     private JDA jda;
 
+    @Transactional
     public void createTeam(CreateTeamDTO createTeamDTO) {
-        Channel channel = Channel.builder()
-            .discordChannelId(createTeamDTO.channelId())
-            .channelName(createTeamDTO.channelName())
-            .build();
+        Channel channel = channelService.createChannel(createTeamDTO);
 
         Team team = Team.builder()
             .name(createTeamDTO.teamName())
@@ -39,35 +47,35 @@ public class TeamService {
     @Transactional
     public void deleteTeam(Long teamId) {
         Team team = teamRepository.getById(teamId);
-
         Channel channel = team.getChannel();
-        String discordChannelId = channel.getDiscordChannelId();
 
-        // Discord 채널 삭제 요청 (비동기)
-        deleteDiscordVoiceChannel(discordChannelId);
-
-        // DB에서 Team 삭제 (orphanRemoval로 Channel도 자동 삭제)
         teamRepository.delete(team);
     }
 
-    private void deleteDiscordVoiceChannel(String discordChannelId) {
-        Guild guild = jda.getGuildById("디스코드_서버_ID"); // 실제 Guild ID로 변경!
+    public void putUserInTeam(PutPersonDTO putPersonDTO) {
+        Team team = teamRepository.getById(putPersonDTO.teamId());
 
-        if (guild != null) {
-            guild.getVoiceChannelById(discordChannelId)
-                .delete()
-                .queue(
-                    success -> System.out.println("✅ Discord 음성채널 삭제 완료"),
-                    error -> System.err.println("❌ Discord 음성채널 삭제 실패: " + error.getMessage())
-                );
-        }
+        putPersonDTO.members().stream()
+            .map(member -> {
+                String discordId = member.getId();
+                String name = member.getUser().getName();
+                String nickName = member.getNickname();
+
+                Person person = Person.builder()
+                    .discordId(discordId)
+                    .nickName(nickName != null ? nickName : name)
+                    .build();
+
+                person.setTeam(team);
+                return personRepository.save(person);
+            });
     }
 
-    public void putUserInTeam() {
+    public void deletePersonInTeam() {
 
     }
 
-    public void deleteUserInTeam() {
-
+    public List<Team> getAllTeams() {
+        return teamRepository.findAll();
     }
 }
