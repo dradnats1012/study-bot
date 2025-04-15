@@ -37,5 +37,5 @@ public class Record {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private Person person;
+    private TeamMember teamMember;
 }

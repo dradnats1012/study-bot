@@ -15,11 +15,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "person")
+@Table(name = "team_member")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Person {
+public class TeamMember {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,7 +36,7 @@ public class Person {
     private Team team;
 
     @Builder
-    public Person(String discordId, String nickName, Team team){
+    public TeamMember(String discordId, String nickName, Team team){
         this.discordId = discordId;
         this.nickName = nickName;
         this.team = team;

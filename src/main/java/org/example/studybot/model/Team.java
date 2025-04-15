@@ -33,7 +33,7 @@ public class Team {
     private String name;
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Person> persons = new ArrayList<>();
+    private List<TeamMember> teamMembers = new ArrayList<>();
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "channel_id")
