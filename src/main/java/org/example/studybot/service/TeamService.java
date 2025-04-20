@@ -33,11 +33,12 @@ public class TeamService {
 
     @Transactional
     public void createTeam(CreateTeamDTO createTeamDTO) {
-        Channel channel = channelService.createChannel(createTeamDTO);
+        List<Channel> channels = channelService.createChannel(createTeamDTO);
 
         Team team = Team.builder()
             .name(createTeamDTO.teamName())
-            .channel(channel)
+            .voiceChannel(channels.get(0))
+            .chatChannel(channels.get(1))
             .build();
 
         teamRepository.save(team);
@@ -46,7 +47,6 @@ public class TeamService {
     @Transactional
     public void deleteTeam(Long teamId) {
         Team team = teamRepository.getById(teamId);
-        Channel channel = team.getChannel();
 
         teamRepository.delete(team);
     }

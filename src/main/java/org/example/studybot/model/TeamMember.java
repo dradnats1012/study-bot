@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Setter;   
 
 @Entity
 @Table(name = "team_member")
@@ -28,7 +28,7 @@ public class TeamMember {
     @Column(name = "discord_id", nullable = false)
     private String discordId;
 
-    @Column(name = "nick_name", nullable = false)
+    @Column(name = "nick_name", nullable = true)
     private String nickName;
 
     @ManyToOne(fetch = FetchType.LAZY)
