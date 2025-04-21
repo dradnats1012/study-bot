@@ -28,15 +28,15 @@ public class CommandRegistry {
 
     public List<TextCommands> getTextCommands() {
         return commandList.stream()
-            .filter(c -> c instanceof TextCommands)
-            .map(c -> (TextCommands)c)
+            .filter(command -> command instanceof TextCommands)
+            .map(command -> (TextCommands)command)
             .toList();
     }
 
     public List<RecordCommands> getRecordCommands() {
         return commandList.stream()
-            .filter(c -> c instanceof RecordCommands)
-            .map(c -> (RecordCommands)c)
+            .filter(command -> command instanceof RecordCommands)
+            .map(command -> (RecordCommands)command)
             .toList();
     }
 }

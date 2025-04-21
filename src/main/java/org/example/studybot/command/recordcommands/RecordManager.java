@@ -8,6 +8,8 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.example.studybot.voicechannel.VoiceChannelLog;
 import org.example.studybot.voicechannel.VoiceChannelLogRepository;
@@ -24,54 +26,27 @@ public class RecordManager {
     private VoiceChannelLogRepository repository;
 
     public String getAllMonthlyLogs() {
-        LocalDate startOfMonth = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-        LocalDateTime start = startOfMonth.atStartOfDay();
-        LocalDateTime end = endOfMonth.atTime(23, 59, 59);
-        List<VoiceChannelLog> logs = repository.findAllLogsBetween(start, end);
-        return formatLogsSummed(logs, "월간");
+        return formatLogsByRange("월간", getMonthRange(), Optional.empty());
     }
 
     public String getAllWeeklyLogs() {
-        LocalDate startOfWeek = LocalDate.now().with(DayOfWeek.MONDAY);
-        LocalDate endOfWeek = startOfWeek.plusDays(6);
-        LocalDateTime start = startOfWeek.atStartOfDay();
-        LocalDateTime end = endOfWeek.atTime(23, 59, 59);
-        List<VoiceChannelLog> logs = repository.findAllLogsBetween(start, end);
-        return formatLogsSummed(logs, "주간");
+        return formatLogsByRange("주간", getWeekRange(), Optional.empty());
     }
 
     public String getAllDailyLogs() {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
-        List<VoiceChannelLog> logs = repository.findAllLogsBetween(startOfDay, endOfDay);
-        return formatLogsSummed(logs, "일간");
+        return formatLogsByRange("일간", getDayRange(), Optional.empty());
     }
 
     public String getMonthlyLogs(String userName) {
-        LocalDate startOfMonth = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-        LocalDateTime start = startOfMonth.atStartOfDay();
-        LocalDateTime end = endOfMonth.atTime(23, 59, 59);
-        List<VoiceChannelLog> logs = repository.findLogsBetween(start, end, userName);
-        System.out.println(userName);
-        return formatLogsSummed(logs, "월간");
+        return formatLogsByRange("월간", getMonthRange(), Optional.of(userName));
     }
 
     public String getWeeklyLogs(String userName) {
-        LocalDate startOfWeek = LocalDate.now().with(DayOfWeek.MONDAY);
-        LocalDate endOfWeek = startOfWeek.plusDays(6);
-        LocalDateTime start = startOfWeek.atStartOfDay();
-        LocalDateTime end = endOfWeek.atTime(23, 59, 59);
-        List<VoiceChannelLog> logs = repository.findLogsBetween(start, end, userName);
-        return formatLogsSummed(logs, "주간");
+        return formatLogsByRange("주간", getWeekRange(), Optional.of(userName));
     }
 
     public String getDailyLogs(String userName) {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
-        List<VoiceChannelLog> logs = repository.findLogsBetween(startOfDay, endOfDay, userName);
-        return formatLogsSummed(logs, "일간");
+        return formatLogsByRange("일간", getDayRange(), Optional.of(userName));
     }
 
     public String getLogsForSpecificDate(String datePart) {
@@ -104,25 +79,59 @@ public class RecordManager {
             return periodName + " 기간 동안 기록이 없습니다.";
         }
 
-        // 사용자별로 총 머문 시간을 계산
-        Map<String, Long> userDurationMap = new HashMap<>();
-        logs.forEach(log -> userDurationMap.merge(
-            log.getNickName(), log.getDuration(), Long::sum
-        ));
-
-        // 결과 메시지 작성
-        StringBuilder response = new StringBuilder(periodName + " 기간 내 기록:\n");
-        userDurationMap.forEach((username, totalDuration) -> {
-            long hours = totalDuration / 3600;
-            long minutes = (totalDuration % 3600) / 60;
-            long seconds = totalDuration % 60;
-
-            response.append(String.format(
-                "%s님이 총 %d시간 %d분 %d초 동안 머물렀습니다.\n",
-                username, hours, minutes, seconds
+        Map<String, Long> userDurations = logs.stream()
+            .collect(Collectors.groupingBy(
+                VoiceChannelLog::getNickName,
+                Collectors.summingLong(VoiceChannelLog::getDuration)
             ));
-        });
 
-        return response.toString();
+        return userDurations.entrySet().stream()
+            .map(entry -> formatDuration(entry.getKey(), entry.getValue()))
+            .collect(Collectors.joining(
+                "\n", periodName + " 기간 내 기록:\n", ""
+            ));
+    }
+
+    private String formatDuration(String user, long totalSeconds) {
+        long hours = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+        return String.format("%s님이 총 %d시간 %d분 %d초 동안 머물렀습니다.", user, hours, minutes, seconds);
+    }
+
+
+    private String formatLogsByRange(String label, List<LocalDateTime> range, Optional<String> userNameOpt) {
+        LocalDateTime start = range.get(0);
+        LocalDateTime end = range.get(1);
+
+        List<VoiceChannelLog> logs = userNameOpt
+            .map(userName -> repository.findLogsBetween(start, end, userName))
+            .orElseGet(() -> repository.findAllLogsBetween(start, end));
+
+        return formatLogsSummed(logs, label);
+    }
+
+    private List<LocalDateTime> getMonthRange() {
+        LocalDate now = LocalDate.now();
+        return List.of(
+            now.with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay(),
+            now.with(TemporalAdjusters.lastDayOfMonth()).atTime(23, 59, 59)
+        );
+    }
+
+    private List<LocalDateTime> getWeekRange() {
+        LocalDate start = LocalDate.now().with(DayOfWeek.MONDAY);
+        return List.of(
+            start.atStartOfDay(),
+            start.plusDays(6).atTime(23, 59, 59)
+        );
+    }
+
+    private List<LocalDateTime> getDayRange() {
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        return List.of(
+            start,
+            start.plusDays(1).minusSeconds(1)
+        );
     }
 }

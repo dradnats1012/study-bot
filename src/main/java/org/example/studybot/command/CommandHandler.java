@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CommandHandler {
+
     private final CommandRegistry registry;
 
     public String handle(String commandName, String displayName, String userName) {
