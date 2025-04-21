@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import org.example.studybot.model.Channel;
-import org.example.studybot.model.Person;
+import org.example.studybot.model.TeamMember;
 import org.example.studybot.model.Record;
 import org.example.studybot.repository.ChannelRepository;
-import org.example.studybot.repository.PersonRepository;
+import org.example.studybot.repository.TeamMemberRepository;
 import org.example.studybot.repository.RecordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,15 +25,15 @@ public class RecordService {
     private ChannelRepository channelRepository;
 
     @Autowired
-    private PersonRepository personRepository;
+    private TeamMemberRepository teamMemberRepository;
 
     public void handleJoin(Member member, VoiceChannel joined) {
-        Person person = personRepository.getByDiscordId(member.getId());
+        TeamMember teamMember = teamMemberRepository.getByDiscordId(member.getId());
 
         Channel channel = channelRepository.getByDiscordChannelId(joined.getId());
 
         Record record = new Record();
-        record.setPerson(person);
+        record.setTeamMember(teamMember);
         record.setChannel(channel);
         record.setRecordedAt(LocalDateTime.now());
         record.setDuration(null); // 아직 머문 시간 없음
@@ -42,17 +42,17 @@ public class RecordService {
     }
 
     public void handleLeave(Member member, VoiceChannel left) {
-        Person person = personRepository.findByDiscordId(member.getId())
+        TeamMember teamMember = teamMemberRepository.findByDiscordId(member.getId())
             .orElse(null);
 
-        if (person == null) return;
+        if (teamMember == null) return;
 
         Channel channel = channelRepository.findByDiscordChannelId(left.getId())
             .orElse(null);
 
         if (channel == null) return;
 
-        Record record = recordRepository.findTopByPersonAndChannelAndDurationIsNullOrderByRecordedAtDesc(person, channel)
+        Record record = recordRepository.findTopByTeamMemberAndChannelAndDurationIsNullOrderByRecordedAtDesc(teamMember, channel)
             .orElse(null);
 
         if (record == null) return;

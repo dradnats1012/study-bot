@@ -33,18 +33,24 @@ public class Team {
     private String name;
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Person> persons = new ArrayList<>();
+    private List<TeamMember> teamMembers = new ArrayList<>();
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "channel_id")
-    private Channel channel;
+    @JoinColumn(name = "voice_channel_id")
+    private Channel voiceChannel;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "chat_channel_id")
+    private Channel chatChannel;
 
     @Builder
     public Team(
         String name,
-        Channel channel
+        Channel voiceChannel,
+        Channel chatChannel
     ) {
         this.name = name;
-        this.channel = channel;
+        this.voiceChannel = voiceChannel;
+        this.chatChannel = chatChannel;
     }
 }

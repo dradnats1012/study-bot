@@ -12,14 +12,14 @@ import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Setter;   
 
 @Entity
-@Table(name = "person")
+@Table(name = "team_member")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Person {
+public class TeamMember {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +28,7 @@ public class Person {
     @Column(name = "discord_id", nullable = false)
     private String discordId;
 
-    @Column(name = "nick_name", nullable = false)
+    @Column(name = "nick_name", nullable = true)
     private String nickName;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -36,7 +36,7 @@ public class Person {
     private Team team;
 
     @Builder
-    public Person(String discordId, String nickName, Team team){
+    public TeamMember(String discordId, String nickName, Team team){
         this.discordId = discordId;
         this.nickName = nickName;
         this.team = team;
