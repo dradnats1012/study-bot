@@ -1,6 +1,7 @@
 package org.example.studybot.voicechannel;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,7 +24,14 @@ public class VoiceChannelLog {
     private String nickName;
     private Long channelId;
     private String channelName;
-    private Long duration; // 머문 시간(초)
-    private LocalDateTime recordedAt; // 기록 시간
+    private LocalDateTime joinedAt;
+    private LocalDateTime leftAt;
     private String userName;
+
+    public Long getDuration() {
+        if (leftAt == null) {
+            return null;
+        }
+        return ChronoUnit.SECONDS.between(joinedAt, leftAt);
+    }
 }
