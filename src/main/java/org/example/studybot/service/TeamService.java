@@ -13,8 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import net.dv8tion.jda.api.JDA;
-
 @Service
 @Transactional(readOnly = true)
 public class TeamService {
@@ -27,9 +25,6 @@ public class TeamService {
 
     @Autowired
     private ChannelService channelService;
-
-    @Autowired
-    private JDA jda;
 
     @Transactional
     public void createTeam(CreateTeamDTO createTeamDTO) {
